@@ -115,6 +115,8 @@ struct SettingsFeature {
     case setRemappingScratchpadFocused(Bool)
     case setLowercaseTranscripts(Bool)
     case setRemovePunctuation(Bool)
+    case setCustomVocabularyEnabled(Bool)
+    case setCustomVocabulary(String)
   }
 
   @Dependency(\.keyEventMonitor) var keyEventMonitor
@@ -409,6 +411,14 @@ struct SettingsFeature {
 
       case let .setRemovePunctuation(enabled):
         state.$hexSettings.withLock { $0.removePunctuation = enabled }
+        return .none
+
+      case let .setCustomVocabularyEnabled(enabled):
+        state.$hexSettings.withLock { $0.customVocabularyEnabled = enabled }
+        return .none
+
+      case let .setCustomVocabulary(vocabulary):
+        state.$hexSettings.withLock { $0.customVocabulary = vocabulary }
         return .none
 
       case .startSettingPasteLastTranscriptHotkey:
