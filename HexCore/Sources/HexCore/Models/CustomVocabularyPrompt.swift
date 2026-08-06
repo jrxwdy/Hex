@@ -39,10 +39,22 @@ public enum CustomVocabularyPrompt {
 		let terms = parseTerms(vocabulary)
 		guard !terms.isEmpty else { return nil }
 
-		var prompt = "Vocabulary: \(terms.joined(separator: ", "))."
-		while prompt.count > maxPromptLength, let lastComma = prompt.lastIndex(of: ",") {
-			prompt = String(prompt[prompt.startIndex..<lastComma]) + "."
+		// Build incrementally from whole terms that fit. Never splits a term, and
+		// handles a single over-long term (or over-long final term) by dropping it —
+		// the previous comma-trim loop missed both cases when no comma was present.
+		let prefix = "Vocabulary: "
+		let suffix = "."
+		var includedTerms: [String] = []
+		var length = prefix.count + suffix.count
+
+		for term in terms {
+			let separatorLength = includedTerms.isEmpty ? 0 : 2 // ", "
+			guard length + separatorLength + term.count <= maxPromptLength else { continue }
+			includedTerms.append(term)
+			length += separatorLength + term.count
 		}
-		return prompt
+
+		guard !includedTerms.isEmpty else { return nil }
+		return prefix + includedTerms.joined(separator: ", ") + suffix
 	}
 }

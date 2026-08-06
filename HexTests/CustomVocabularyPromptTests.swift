@@ -51,4 +51,31 @@ final class CustomVocabularyPromptTests: XCTestCase {
 		// Trimming must not cut a term in half: the tail term is removed whole
 		XCTAssertFalse(prompt.contains("VocabularyTerm30"))
 	}
+
+	func testMakePromptTextSingleOverlongTermReturnsNil() {
+		// One term longer than the whole budget: no comma to trim to, and the
+		// term must never be split — so there is nothing usable to prompt with
+		let hugeTerm = String(repeating: "a", count: CustomVocabularyPrompt.maxPromptLength)
+		XCTAssertNil(CustomVocabularyPrompt.makePromptText(vocabulary: hugeTerm, isEnabled: true))
+	}
+
+	func testMakePromptTextOverlongFinalTermIsDropped() {
+		// Short terms fit; a trailing over-long term is dropped rather than
+		// pushing the prompt over the cap
+		let hugeTail = String(repeating: "z", count: CustomVocabularyPrompt.maxPromptLength)
+		let prompt = CustomVocabularyPrompt.makePromptText(
+			vocabulary: "Langton, TCA, \(hugeTail)",
+			isEnabled: true
+		)
+		XCTAssertEqual(prompt, "Vocabulary: Langton, TCA.")
+	}
+
+	func testMakePromptTextSkipsOverlongMiddleTermKeepsRest() {
+		let hugeMiddle = String(repeating: "m", count: CustomVocabularyPrompt.maxPromptLength)
+		let prompt = CustomVocabularyPrompt.makePromptText(
+			vocabulary: "Langton, \(hugeMiddle), TCA",
+			isEnabled: true
+		)
+		XCTAssertEqual(prompt, "Vocabulary: Langton, TCA.")
+	}
 }
